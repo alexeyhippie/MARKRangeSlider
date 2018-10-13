@@ -17,6 +17,7 @@
 + (UIColor *)backgroundColor
 {
     return [UIColor colorWithHexString:@"#121314"];
+    return [UIColor whiteColor];
 }
 
 + (UIColor *)navBarBackgroundColor
