@@ -199,7 +199,7 @@ static NSString * const kMARKRangeSliderTrackRangeImage = @"rangeSliderTrackRang
         [gesture setTranslation:CGPointZero inView:self];
 
         [self sendActionsForControlEvents:UIControlEventValueChanged];
-    } else if gesture.state == UIGestureRecognizerStateEnded {
+    } else if (gesture.state == UIGestureRecognizerStateEnded) {
         [self sendActionsForControlEvents:UIControlEventTouchDragExit]
     }
 }
@@ -220,7 +220,7 @@ static NSString * const kMARKRangeSliderTrackRangeImage = @"rangeSliderTrackRang
         [gesture setTranslation:CGPointZero inView:self];
 
         [self sendActionsForControlEvents:UIControlEventValueChanged];
-    } else if gesture.state == UIGestureRecognizerStateEnded {
+    } else if (gesture.state == UIGestureRecognizerStateEnded) {
         [self sendActionsForControlEvents:UIControlEventTouchDragExit]
     }
 }
