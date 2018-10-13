@@ -6,6 +6,9 @@ static NSString * const kMARKRangeSliderTrackRangeImage = @"rangeSliderTrackRang
 
 @interface MARKRangeSlider ()
 
+@property (nonatomic) CGFloat currentLeftValue;
+@property (nonatomic) CGFloat currentRightValue;
+
 @property (nonatomic) UIImageView *trackImageView;
 @property (nonatomic) UIImageView *rangeImageView;
 
@@ -16,6 +19,8 @@ static NSString * const kMARKRangeSliderTrackRangeImage = @"rangeSliderTrackRang
 
 @implementation MARKRangeSlider
 
+@synthesize currentLeftValue = _currentLeftValue;
+@synthesize currentRightValue = _currentRightValue;
 @synthesize trackImage = _trackImage;
 @synthesize rangeImage = _rangeImage;
 @synthesize leftThumbImage = _leftThumbImage;
@@ -52,11 +57,11 @@ static NSString * const kMARKRangeSliderTrackRangeImage = @"rangeSliderTrackRang
 
 - (void)setLeftValue:(CGFloat)leftValue rightValue:(CGFloat)rightValue {
     if (leftValue == 0 && rightValue == 0) {
-        self.leftValue = leftValue;
-        self.rightValue = rightValue;
+        self.currentLeftValue = leftValue;
+        self.currentRightValue = rightValue;
     } else {
-        self.rightValue = rightValue;
-        self.leftValue = leftValue;
+        self.currentRightValue = rightValue;
+        self.currentLeftValue = leftValue;
     }
 }
 
@@ -66,8 +71,8 @@ static NSString * const kMARKRangeSliderTrackRangeImage = @"rangeSliderTrackRang
 {
     self.minimumValue = 0.0f;
     self.maximumValue = 1.0f;
-    self.leftValue = self.minimumDistance;
-    self.rightValue = self.maximumValue;
+    self.currentLeftValue = self.minimumDistance;
+    self.currentRightValue = self.maximumValue;
     self.minimumDistance = 0.2f;
 }
 
@@ -136,12 +141,12 @@ static NSString * const kMARKRangeSliderTrackRangeImage = @"rangeSliderTrackRang
 
     CGFloat trackRange = self.maximumValue - self.minimumValue;
 
-    CGFloat leftX = floorf((self.leftValue - self.minimumValue) / trackRange * leftAvailableWidth);
+    CGFloat leftX = floorf((self.currentLeftValue - self.minimumValue) / trackRange * leftAvailableWidth);
     if (isnan(leftX)) {
         leftX = 0.0;
     }
 
-    CGFloat rightX = floorf((self.rightValue - self.minimumValue) / trackRange * rightAvailableWidth);
+    CGFloat rightX = floorf((self.currentRightValue - self.minimumValue) / trackRange * rightAvailableWidth);
     if (isnan(rightX)) {
         rightX = 0.0;
     }
@@ -194,13 +199,14 @@ static NSString * const kMARKRangeSliderTrackRangeImage = @"rangeSliderTrackRang
         CGFloat width = CGRectGetWidth(self.frame) - CGRectGetWidth(self.leftThumbImageView.frame);
 
         // Change left value
-        self.leftValue += translation.x / width * trackRange;
+        self.currentLeftValue += translation.x / width * trackRange;
 
         [gesture setTranslation:CGPointZero inView:self];
 
         [self sendActionsForControlEvents:UIControlEventValueChanged];
     } else if (gesture.state == UIGestureRecognizerStateEnded) {
-        [self sendActionsForControlEvents:UIControlEventTouchDragExit]
+        [self sendActionsForControlEvents:UIControlEventTouchDragExit];
+        self.currentLeftValue = self.leftValue;
     }
 }
 
@@ -215,13 +221,14 @@ static NSString * const kMARKRangeSliderTrackRangeImage = @"rangeSliderTrackRang
         CGFloat width = CGRectGetWidth(self.frame) - CGRectGetWidth(self.rightThumbImageView.frame);
 
         // Change right value
-        self.rightValue += translation.x / width * trackRange;
+        self.currentRightValue += translation.x / width * trackRange;
 
         [gesture setTranslation:CGPointZero inView:self];
 
         [self sendActionsForControlEvents:UIControlEventValueChanged];
     } else if (gesture.state == UIGestureRecognizerStateEnded) {
-        [self sendActionsForControlEvents:UIControlEventTouchDragExit]
+        self.currentRightValue = self.rightValue;
+        [self sendActionsForControlEvents:UIControlEventTouchDragExit];
     }
 }
 
@@ -277,12 +284,12 @@ static NSString * const kMARKRangeSliderTrackRangeImage = @"rangeSliderTrackRang
         minimumValue = self.maximumValue - self.minimumDistance;
     }
 
-    if (self.leftValue < minimumValue) {
-        self.leftValue = minimumValue;
+    if (self.currentLeftValue < minimumValue) {
+        self.currentLeftValue = minimumValue;
     }
 
-    if (self.rightValue < minimumValue) {
-        self.rightValue = self.maximumValue;
+    if (self.currentRightValue < minimumValue) {
+        self.currentRightValue = self.maximumValue;
     }
 
     _minimumValue = minimumValue;
@@ -298,12 +305,12 @@ static NSString * const kMARKRangeSliderTrackRangeImage = @"rangeSliderTrackRang
         maximumValue = self.minimumValue + self.minimumDistance;
     }
 
-    if (self.leftValue > maximumValue) {
-        self.leftValue = self.minimumValue;
+    if (self.currentLeftValue > maximumValue) {
+        self.currentLeftValue = self.minimumValue;
     }
 
-    if (self.rightValue > maximumValue) {
-        self.rightValue = maximumValue;
+    if (self.currentRightValue > maximumValue) {
+        self.currentRightValue = maximumValue;
     }
 
     _maximumValue = maximumValue;
@@ -313,67 +320,112 @@ static NSString * const kMARKRangeSliderTrackRangeImage = @"rangeSliderTrackRang
     [self setNeedsLayout];
 }
 
-
-- (void)setLeftValue:(CGFloat)leftValue
+- (void)setCurrentLeftValue:(CGFloat)currentLeftValue
 {
-    CGFloat allowedValue = self.rightValue - self.minimumDistance;
-    if (leftValue > allowedValue) {
+    CGFloat allowedValue = self.currentRightValue - self.minimumDistance;
+    if (currentLeftValue > allowedValue) {
         if (self.pushable) {
-            CGFloat rightSpace = self.maximumValue - self.rightValue;
-            CGFloat deltaLeft = self.minimumDistance - (self.rightValue - leftValue);
+            CGFloat rightSpace = self.maximumValue - self.currentRightValue;
+            CGFloat deltaLeft = self.minimumDistance - (self.currentRightValue - currentLeftValue);
             if (deltaLeft > 0 && rightSpace > deltaLeft) {
-                self.rightValue += deltaLeft;
+                self.currentRightValue += deltaLeft;
             }
             else {
-                leftValue = allowedValue;
+                currentLeftValue = allowedValue;
             }
         }
         else {
-            leftValue = allowedValue;
+            currentLeftValue = allowedValue;
         }
     }
-
-    if (leftValue < self.minimumValue) {
-        leftValue = self.minimumValue;
-        if (self.rightValue - leftValue < self.minimumDistance) {
-            self.rightValue = leftValue + self.minimumDistance;
+    
+    if (currentLeftValue < self.minimumValue) {
+        currentLeftValue = self.minimumValue;
+        if (self.currentRightValue - currentLeftValue < self.minimumDistance) {
+            self.currentRightValue = currentLeftValue + self.minimumDistance;
         }
     }
-
-    _leftValue = leftValue;
-
+    
+    _currentLeftValue = currentLeftValue;
+    
     [self setNeedsLayout];
 }
 
-- (void)setRightValue:(CGFloat)rightValue
+- (void)setCurrentRightValue:(CGFloat)currentRightValue
 {
-    CGFloat allowedValue = self.leftValue + self.minimumDistance;
-    if (rightValue < allowedValue) {
+    CGFloat allowedValue = self.currentLeftValue + self.minimumDistance;
+    if (currentRightValue < allowedValue) {
         if (self.pushable) {
-            CGFloat leftSpace = self.leftValue - self.minimumValue;
-            CGFloat deltaRight = self.minimumDistance - (rightValue - self.leftValue);
+            CGFloat leftSpace = self.currentLeftValue - self.minimumValue;
+            CGFloat deltaRight = self.minimumDistance - (currentRightValue - self.currentLeftValue);
             if (deltaRight > 0 && leftSpace > deltaRight) {
-                self.leftValue -= deltaRight;
+                self.currentLeftValue -= deltaRight;
             }
             else {
-                rightValue = allowedValue;
+                currentRightValue = allowedValue;
             }
         }
         else {
-            rightValue = allowedValue;
+            currentRightValue = allowedValue;
         }
     }
-
-    if (rightValue > self.maximumValue) {
-        rightValue = self.maximumValue;
-        if (rightValue - self.leftValue < self.minimumDistance) {
-            self.leftValue = rightValue - self.minimumDistance;
+    
+    if (currentRightValue > self.maximumValue) {
+        currentRightValue = self.maximumValue;
+        if (currentRightValue - self.currentLeftValue < self.minimumDistance) {
+            self.currentLeftValue = currentRightValue - self.minimumDistance;
         }
     }
-
-    _rightValue = rightValue;
-
+    
+    _currentRightValue = currentRightValue;
+    
     [self setNeedsLayout];
+}
+
+- (CGFloat)leftValue
+{
+    return [self _nearestAllowedValueTo: self.currentLeftValue];
+}
+
+- (CGFloat)rightValue
+{
+    return [self _nearestAllowedValueTo: self.currentRightValue];
+}
+
+- (CGFloat)_nearestAllowedValueTo:(CGFloat) value
+{
+    CGFloat result = value;
+    
+    if (self.allowedValues.count != 0) {
+        
+        CGFloat highValue = 0.0;
+        NSInteger index = 0;
+        for (NSNumber* anAllowedValue in self.allowedValues) {
+            if (anAllowedValue.floatValue > value) {
+                highValue = anAllowedValue.floatValue;
+                break;
+            }
+            index++;
+        }
+        if (highValue == 0.0) {
+            highValue = [(NSNumber *)self.allowedValues.lastObject floatValue];
+            index = self.allowedValues.count - 1;
+        }
+        
+        if (index != 0)
+        {
+            CGFloat lowValue = [(NSNumber *)(self.allowedValues[index - 1]) floatValue];
+            if ((value - lowValue) > (highValue - value)) {
+                result = highValue;
+            } else {
+                result = lowValue;
+            }
+        } else {
+            result = highValue;
+        }
+    }
+    
+    return result;
 }
 
 - (void)setMinimumDistance:(CGFloat)minimumDistance
@@ -383,10 +435,10 @@ static NSString * const kMARKRangeSliderTrackRangeImage = @"rangeSliderTrackRang
         minimumDistance = distance;
     }
 
-    if (self.rightValue - self.leftValue < minimumDistance) {
+    if (self.currentRightValue - self.currentLeftValue < minimumDistance) {
         // Reset left and right values
-        self.leftValue = self.minimumValue;
-        self.rightValue = self.maximumValue;
+        self.currentLeftValue = self.minimumValue;
+        self.currentRightValue = self.maximumValue;
     }
 
     _minimumDistance = minimumDistance;

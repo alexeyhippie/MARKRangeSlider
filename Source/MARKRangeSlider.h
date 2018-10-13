@@ -14,6 +14,8 @@
 
 @property (nonatomic, assign) CGFloat minimumDistance;
 
+@property (nonatomic) NSArray *allowedValues;
+
 @property (nonatomic) BOOL pushable;
 @property (nonatomic) BOOL disableOverlapping;
 
